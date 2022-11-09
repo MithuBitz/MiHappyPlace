@@ -1,32 +1,41 @@
 package com.example.happyplace
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
 import android.provider.Settings
 import android.view.View
 import android.widget.Toast
-import androidx.core.content.ContextCompat.startActivity
+
 import com.example.happyplace.databinding.ActivityAddHappyPlaceBinding
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
-import com.karumi.dexter.listener.single.PermissionListener
+import java.io.IOException
+
 import java.text.SimpleDateFormat
 import java.util.*
 
 class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
 
-    var binding: ActivityAddHappyPlaceBinding? = null
+    private var binding: ActivityAddHappyPlaceBinding? = null
+
+    companion object {
+        private const val GALLERY = 1
+        private const val CAMERA = 2
+    }
 
     private var cal = Calendar.getInstance()
-    lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
+    private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +52,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
         
-        dateSetListener = DatePickerDialog.OnDateSetListener { view, year, month, dayOfMonth ->
+        dateSetListener = DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
             cal.set(Calendar.YEAR, year)
             cal.set(Calendar.MONTH, month)
             cal.set(Calendar.DAY_OF_MONTH, dayOfMonth)
@@ -67,7 +76,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             }
 
             R.id.tv_add_image -> {
-                //TODO Create a variable to hold the AlertDialog Builder
+                // Create a variable to hold the AlertDialog Builder
                 val pictureDialog = AlertDialog.Builder(this)
                 //set the title for the builder
                 pictureDialog.setTitle("Select Action")
@@ -77,10 +86,9 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                 pictureDialog.setItems(pictureDialogItems){
                     _, which ->
                     when(which){
-                        0 ->
-                            choosePhotoFromGallery()
+                        0 -> choosePhotoFromGallery()
 
-                        1 -> Toast.makeText(this@AddHappyPlaceActivity, "You are useing the camera", Toast.LENGTH_LONG).show()
+                        1 -> takePhotoFromCamera()
                     }
                 }
                 pictureDialog.show()
@@ -115,13 +123,16 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             }.show()
     }
 
-    private fun choosePhotoFromGallery(){
+    private fun takePhotoFromCamera(){
         Dexter.withContext(this)
-            .withPermissions(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            .withPermissions(android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                android.Manifest.permission.CAMERA)
             .withListener(object : MultiplePermissionsListener {
                 override  fun onPermissionsChecked(report: MultiplePermissionsReport?) {
                     if (report!!.areAllPermissionsGranted()){ //If all the permission is granted by user
-                        Toast.makeText(this@AddHappyPlaceActivity, "All Permission Granted so you have to select image from Gallery", Toast.LENGTH_SHORT).show()
+                        val galleryIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                        startActivityForResult(galleryIntent, CAMERA)
                     }
                 }
                 override fun onPermissionRationaleShouldBeShown(permissions: MutableList<PermissionRequest>, token: PermissionToken) {
@@ -129,6 +140,45 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     showRationalDialogforPermission()
                 }
             }).onSameThread().check()
+    }
+
+    private fun choosePhotoFromGallery(){
+        Dexter.withContext(this)
+            .withPermissions(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            .withListener(object : MultiplePermissionsListener {
+                override  fun onPermissionsChecked(report: MultiplePermissionsReport?) {
+                    if (report!!.areAllPermissionsGranted()){ //If all the permission is granted by user
+                        val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                        startActivityForResult(galleryIntent, GALLERY)
+                    }
+                }
+                override fun onPermissionRationaleShouldBeShown(permissions: MutableList<PermissionRequest>, token: PermissionToken) {
+                    //If the permission is not granted by the user
+                    showRationalDialogforPermission()
+                }
+            }).onSameThread().check()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if(resultCode == Activity.RESULT_OK){
+            if (requestCode == GALLERY) {
+                if (data != null){
+                    val contentUri = data.data
+                    try {
+                        val selectedImageBitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, contentUri)
+                        binding?.ivPlaceImage?.setImageBitmap(selectedImageBitmap)
+                    }catch (e: IOException){
+                        e.printStackTrace()
+                        Toast.makeText(this, "There is an error to select the image from gallery", Toast.LENGTH_LONG).show()
+                    }
+                }
+            } else if (requestCode == CAMERA){
+                        val cameraImage: Bitmap = data!!.extras!!.get("data") as Bitmap
+                        binding?.ivPlaceImage?.setImageBitmap(cameraImage)
+            }
+        }
     }
 
 
