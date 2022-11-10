@@ -4,6 +4,8 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
@@ -11,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 
@@ -20,7 +23,10 @@ import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
+import java.io.OutputStream
 
 import java.text.SimpleDateFormat
 import java.util.*
@@ -32,6 +38,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
     companion object {
         private const val GALLERY = 1
         private const val CAMERA = 2
+        private const val IMAGE_DIRECTORY = "HappyPlaceImages"
     }
 
     private var cal = Calendar.getInstance()
@@ -168,6 +175,9 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     val contentUri = data.data
                     try {
                         val selectedImageBitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, contentUri)
+                        // use saveImageIntoIntenalStorage function to store the selected image
+                         val saveImageIntoIntenalStorage = saveImageIntoIntenalStorage(selectedImageBitmap)
+                        Log.i("Image Loc: ", "Path: $saveImageIntoIntenalStorage")
                         binding?.ivPlaceImage?.setImageBitmap(selectedImageBitmap)
                     }catch (e: IOException){
                         e.printStackTrace()
@@ -176,9 +186,40 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                 }
             } else if (requestCode == CAMERA){
                         val cameraImage: Bitmap = data!!.extras!!.get("data") as Bitmap
+                        //use saveImageIntoIntenalStorage function to store the captured image
+                        val saveImageIntoIntenalStorage = saveImageIntoIntenalStorage(cameraImage)
+                        Log.i("Image Loc: ", "Path: $saveImageIntoIntenalStorage")
                         binding?.ivPlaceImage?.setImageBitmap(cameraImage)
             }
         }
+    }
+
+    //Create a function to save the image into internal storage with bitmap as a argument and it return a Uri
+    private fun saveImageIntoIntenalStorage(bitmap: Bitmap): Uri {
+        //create a wrapper variable for ContextWrapper with application Context
+        val wrapper = ContextWrapper(applicationContext)
+        //Create a variable for file with the wrapper.getDir method useing directory and also private mode so that no other app use that image
+        var file = wrapper.getDir("IMAGE_DIRECTORY", Context.MODE_PRIVATE)
+        //create that file with File method which has above file variable and a UUID as a argument
+        file = File(file, "${UUID.randomUUID()}.jpg")
+
+        //To store the file now we use File Output Stream with help of try and catch block
+        try {
+            //create a OutputStream useing FileOutputStrame and takeing above file as a argument
+            var stream: OutputStream = FileOutputStream(file)
+            //Now compress the bitmap with Bitmap compress format, quality and stream
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+            //flush the stream and than close the stream
+            stream.flush()
+            stream.close()
+
+
+        }catch (e:IOException){
+            e.printStackTrace()
+        }
+        //Return a Uri with parse and absolute path
+        return Uri.parse(file.absolutePath)
+
     }
 
 
