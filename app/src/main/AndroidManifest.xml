@@ -2,9 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.happyplace">
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -14,18 +14,29 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HappyPlace">
         <activity
-            android:name=".AddHappyPlaceActivity"
+            android:name=".activity.HappyPlaceDetailActivity"
             android:screenOrientation="portrait"
-            android:label="Add Happy Place"
-            android:theme="@style/CustomNoActionBarTheme"
-            android:exported="false">
+            android:label="Happy Place Detail"
+            android:exported="false"
+            android:theme="@style/CustomNoActionBarTheme">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
         <activity
-            android:name=".MainActivity"
-            android:exported="true">
+            android:name=".activity.AddHappyPlaceActivity"
+            android:exported="false"
+            android:label="Add Happy Place"
+            android:screenOrientation="portrait"
+            android:theme="@style/CustomNoActionBarTheme">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
+            android:name=".activity.MainActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

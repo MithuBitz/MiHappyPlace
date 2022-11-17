@@ -4,7 +4,24 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".activity.MainActivity">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/happyPlaceListRV"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        tools:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/notFoundHappyPlaceTV"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="@string/no_happy_place_found"
+        android:gravity="center"
+        android:textSize="16sp"
+        android:visibility="visible"
+        tools:visibility="visible"/>
 
     <!--Here the "fab_margin" is defined in the dimen.xml-->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
